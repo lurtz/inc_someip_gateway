@@ -98,6 +98,10 @@ jobs:
 
             core.info(`Found ${caches.length} cache entries.`);
             for (const cache of caches) {
+              if (!cache || !cache.id) {
+                core.warning(`Skipping malformed cache entry: ${JSON.stringify(cache)}`);
+                continue;
+              }
               core.info(
                 `Deleting cache id=${cache.id}, key=${cache.key}, size=${cache.size_in_bytes}`,
               );

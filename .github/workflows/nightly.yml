@@ -1,0 +1,120 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
+name: Nightly Cache Refresh
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  delete_all_caches:
+    name: Delete all GitHub Actions caches
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Delete all caches in this repository
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const caches = await github.paginate(
+              github.rest.actions.getActionsCacheList,
+              {
+                owner,
+                repo,
+                per_page: 100,
+              },
+              (response) => response.data.actions_caches,
+            );
+
+            core.info(`Found ${caches.length} cache entries.`);
+            for (const cache of caches) {
+              core.info(
+                `Deleting cache id=${cache.id}, key=${cache.key}, size=${cache.size_in_bytes}`,
+              );
+              await github.rest.actions.deleteActionsCacheById({
+                owner,
+                repo,
+                cache_id: cache.id,
+              });
+            }
+
+  pre-commit:
+    needs: delete_all_caches
+    secrets: inherit
+    uses: ./.github/workflows/pre-commit.yml
+
+  build_and_test_host:
+    needs: pre-commit
+    permissions:
+      actions: write # needed for cache deletion at setup-bazel-cache
+    secrets: inherit
+    uses: ./.github/workflows/build_and_test_host.yml
+
+  build_and_test_cross_compilation:
+    needs: build_and_test_host
+    permissions:
+      actions: write # needed for cache deletion at setup-bazel-cache
+    secrets: inherit
+    uses: ./.github/workflows/build_and_test_cross_compilation.yml
+
+  copyright:
+    needs: build_and_test_cross_compilation
+    permissions:
+      actions: write # needed for cache deletion at setup-bazel-cache
+      contents: read
+    secrets: inherit
+    uses: ./.github/workflows/copyright.yml
+
+  format:
+    needs: copyright
+    permissions:
+      actions: write # needed for cache deletion at setup-bazel-cache
+      contents: read
+    secrets: inherit
+    uses: ./.github/workflows/format.yml
+
+  build_and_test_qnx:
+    needs: format
+    secrets: inherit
+    uses: ./.github/workflows/build_and_test_qnx.yml
+    permissions:
+      actions: write # needed for cache deletion at setup-bazel-cache
+      contents: read
+      pull-requests: read
+
+  docs:
+    needs: build_and_test_qnx
+    secrets: inherit
+    uses: ./.github/workflows/docs.yml
+    permissions:
+      actions: write # needed for cache deletion at setup-bazel-cache
+      contents: write
+      pages: write
+      pull-requests: write
+      id-token: write
+
+  license_check:
+    needs: docs
+    secrets: inherit
+    uses: ./.github/workflows/license_check.yml
+    permissions:
+      actions: write # needed for cache deletion at setup-bazel-cache
+      pull-requests: write
+      issues: write

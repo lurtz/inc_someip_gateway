@@ -52,6 +52,8 @@ jobs:
     permissions:
       actions: write
       contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Delete all caches in this repository
         run: gh cache delete --repo ${{ github.repository }} --all

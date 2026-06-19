@@ -40,11 +40,13 @@ jobs:
   copyright:
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
+      contents: read
     secrets: inherit
     uses: ./.github/workflows/copyright.yml
   format:
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
+      contents: read
     secrets: inherit
     uses: ./.github/workflows/format.yml
   # check if PR can be enqueued to the merge queue or merged to main

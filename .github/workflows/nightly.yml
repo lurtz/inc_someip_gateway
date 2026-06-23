@@ -58,9 +58,61 @@ jobs:
       - name: Delete all caches in this repository
         run: gh cache delete --repo ${{ github.repository }} --all
 
-  pre-commit:
+  create_repository_cache:
+    name: Create repository cache (${{ matrix.bazel-config }})
     needs:
       - delete_all_caches
+      - check_recent_default_branch_activity
+    runs-on: ubuntu-24.04
+    if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        bazel-config: ["x86_64-linux", "aarch64-linux", "x86_64-qnx", "aarch64-qnx"]
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      actions: write # needed for cache deletion at setup-bazel-cache
+      contents: read
+    steps:
+      - uses: eclipse-score/more-disk-space@v1
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Create Bazel output base directory
+        run: |
+          sudo mkdir -p /mnt/.bazel
+          sudo chown -R $USER:$USER /mnt/.bazel
+      - name: Create config indicator file
+        run: echo "${{ matrix.bazel-config }}" > .bazel_config
+      - name: Setup Bazel
+        uses: eclipse-score/cicd-actions/setup-bazel-cache@659dcbed63f6b7fbde88c7850125ea0a0a92f939
+        with:
+          unique-cache-name: ${{ github.job }}-${{ matrix.bazel-config }}
+      - name: Warm Bazel repository cache (with retries)
+        run: |
+          max_attempts=3
+          for attempt in $(seq 1 "$max_attempts"); do
+            echo "Running bazel fetch for --config=${{ matrix.bazel-config }} (attempt ${attempt}/${max_attempts})"
+            if bazel fetch --all --config="${{ matrix.bazel-config }}" //...; then
+              echo "Successfully fetched dependencies for --config=${{ matrix.bazel-config }}"
+              exit 0
+            fi
+
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              backoff_seconds=$((attempt * 20))
+              echo "bazel fetch failed (likely transient). Retrying in ${backoff_seconds}s..."
+              sleep "$backoff_seconds"
+            fi
+          done
+
+          echo "bazel fetch failed for --config=${{ matrix.bazel-config }} after ${max_attempts} attempts"
+          exit 1
+
+  pre-commit:
+    needs:
+      - create_repository_cache
       - check_recent_default_branch_activity
     secrets: inherit
     if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' }}
@@ -68,7 +120,7 @@ jobs:
 
   build_and_test_host:
     needs:
-      - pre-commit
+      - create_repository_cache
       - check_recent_default_branch_activity
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
@@ -78,7 +130,7 @@ jobs:
 
   build_and_test_cross_compilation:
     needs:
-      - build_and_test_host
+      - create_repository_cache
       - check_recent_default_branch_activity
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
@@ -88,7 +140,7 @@ jobs:
 
   copyright:
     needs:
-      - build_and_test_cross_compilation
+      - create_repository_cache
       - check_recent_default_branch_activity
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
@@ -99,7 +151,7 @@ jobs:
 
   format:
     needs:
-      - copyright
+      - create_repository_cache
       - check_recent_default_branch_activity
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
@@ -111,7 +163,7 @@ jobs:
   build_and_test_qnx:
     runs-on: ubuntu-latest
     needs:
-      - format
+      - create_repository_cache
       - check_recent_default_branch_activity
     # secrets: inherit
     if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' }}
@@ -126,7 +178,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     needs:
-      - build_and_test_qnx
+      - create_repository_cache
       - check_recent_default_branch_activity
     # secrets: inherit
     if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' }}
@@ -142,7 +194,7 @@ jobs:
 
   license_check:
     needs:
-      - docs
+      - create_repository_cache
       - check_recent_default_branch_activity
     secrets: inherit
     if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' }}

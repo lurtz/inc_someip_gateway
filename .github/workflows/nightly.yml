@@ -95,7 +95,7 @@ jobs:
           max_attempts=3
           for attempt in $(seq 1 "$max_attempts"); do
             echo "Running bazel fetch for --config=${{ matrix.bazel-config }} (attempt ${attempt}/${max_attempts})"
-            if bazel fetch --all --config="${{ matrix.bazel-config }}" //...; then
+            if bazel fetch --config="${{ matrix.bazel-config }}" //...; then
               echo "Successfully fetched dependencies for --config=${{ matrix.bazel-config }}"
               exit 0
             fi

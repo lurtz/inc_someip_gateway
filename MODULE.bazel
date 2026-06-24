@@ -38,6 +38,8 @@ python.toolchain(
     python_version = "3.12",
 )
 
+# dummy modification to trigger a cache refresh in the nightly workflow when MODULE.bazel is modified
+
 bazel_dep(
     name = "score_bazel_tools_python",
     version = "0.1.3",

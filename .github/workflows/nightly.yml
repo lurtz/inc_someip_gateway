@@ -69,14 +69,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - bazel-config: "x86_64-linux"
-          #   bazel-target: "//..."
-          # - bazel-config: "aarch64-linux"
-          #   bazel-target: "//..."
+          - bazel-config: "x86_64-linux"
+            bazel-target: "//..."
+          - bazel-config: "aarch64-linux"
+            bazel-target: "//..."
           - bazel-config: "x86_64-qnx"
             bazel-target: "//src/... //tests/..."
-            # - bazel-config: "aarch64-qnx"
-            #   bazel-target: "//src/... //tests/..."
+          - bazel-config: "aarch64-qnx"
+            bazel-target: "//src/... //tests/..."
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: false
@@ -180,19 +180,16 @@ jobs:
     uses: ./.github/workflows/format.yml
 
   build_and_test_qnx:
-    runs-on: ubuntu-latest
     needs:
       - create_repository_cache
       - check_recent_default_branch_activity
-    # secrets: inherit
+    permissions:
+      actions: write # needed for cache deletion at setup-bazel-cache
+      contents: read
+      pull-requests: read
+    secrets: inherit
     if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' }}
-    # uses: ./.github/workflows/build_and_test_qnx.yml
-    # permissions:
-    #   actions: write # needed for cache deletion at setup-bazel-cache
-    #   contents: read
-    #   pull-requests: read
-    steps:
-      - run: df -h
+    uses: ./.github/workflows/build_and_test_qnx.yml
 
   docs:
     runs-on: ubuntu-latest

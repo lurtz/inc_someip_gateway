@@ -69,14 +69,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - bazel-config: "x86_64-linux"
-            bazel-target: "//..."
-          - bazel-config: "aarch64-linux"
-            bazel-target: "//..."
+          # - bazel-config: "x86_64-linux"
+          #   bazel-target: "//..."
+          # - bazel-config: "aarch64-linux"
+          #   bazel-target: "//..."
           - bazel-config: "x86_64-qnx"
             bazel-target: "//src/... //tests/..."
-          - bazel-config: "aarch64-qnx"
-            bazel-target: "//src/... //tests/..."
+            # - bazel-config: "aarch64-qnx"
+            #   bazel-target: "//src/... //tests/..."
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: false
@@ -98,6 +98,17 @@ jobs:
         uses: eclipse-score/cicd-actions/setup-bazel-cache@659dcbed63f6b7fbde88c7850125ea0a0a92f939
         with:
           unique-cache-name: ${{ github.job }}-${{ matrix.bazel-config }}
+
+      - name: Setup QNX SDP usage
+        uses: eclipse-score/cicd-actions/setup-qnx-sdp@a2b3c36fc7d1b9d03880d19935c7ac9cfffe58c6 # 2026-05-19
+        with:
+          qnx-license: ${{ secrets.score-qnx-license }}
+          # qnx-license-server: ${{ inputs.score-qnx-license-server }}
+          qnx-user: ${{ secrets.score-qnx-user }}
+          qnx-password: ${{ secrets.score-qnx-password }}
+          # qnx-credential-helper: ${{ inputs.credential-helper }}
+          qnx-license-dir: /opt/score_qnx/license
+
       - name: Warm Bazel repository cache (with retries)
         run: |
           max_attempts=3

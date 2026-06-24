@@ -68,7 +68,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        bazel-config: ["x86_64-linux", "aarch64-linux", "x86_64-qnx", "aarch64-qnx"]
+        include:
+          - bazel-config: "x86_64-linux"
+            bazel-target: "//..."
+          - bazel-config: "aarch64-linux"
+            bazel-target: "//..."
+          - bazel-config: "x86_64-qnx"
+            bazel-target: "//src/... //tests/..."
+          - bazel-config: "aarch64-qnx"
+            bazel-target: "//src/... //tests/..."
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: false
@@ -94,9 +102,9 @@ jobs:
         run: |
           max_attempts=3
           for attempt in $(seq 1 "$max_attempts"); do
-            echo "Running bazel fetch for --config=${{ matrix.bazel-config }} (attempt ${attempt}/${max_attempts})"
-            if bazel fetch --config="${{ matrix.bazel-config }}" //...; then
-              echo "Successfully fetched dependencies for --config=${{ matrix.bazel-config }}"
+            echo "Running bazel fetch for --config=${{ matrix.bazel-config }} and targets '${{ matrix.bazel-target }}' (attempt ${attempt}/${max_attempts})"
+            if bazel fetch --config="${{ matrix.bazel-config }}" ${{ matrix.bazel-target }}; then
+              echo "Successfully fetched dependencies for --config=${{ matrix.bazel-config }} and targets '${{ matrix.bazel-target }}'"
               exit 0
             fi
 
@@ -107,7 +115,7 @@ jobs:
             fi
           done
 
-          echo "bazel fetch failed for --config=${{ matrix.bazel-config }} after ${max_attempts} attempts"
+          echo "bazel fetch failed for --config=${{ matrix.bazel-config }} and targets '${{ matrix.bazel-target }}' after ${max_attempts} attempts"
           exit 1
 
   pre-commit:

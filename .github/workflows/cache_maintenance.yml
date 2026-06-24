@@ -85,9 +85,13 @@ jobs:
       contents: read
     env:
       GH_TOKEN: ${{ github.token }}
+      OLD_CACHES_JSON: /tmp/old_caches.json
     steps:
-      - name: Delete all caches in this repository
-        run: gh cache delete --repo ${{ github.repository }} --all || true
+      - name: List and save current caches
+        id: list_caches
+        run: |
+          gh cache list --repo ${{ github.repository }} --json id > $OLD_CACHES_JSON
+          echo "Found $(jq 'length' $OLD_CACHES_JSON) existing caches"
       - uses: eclipse-score/more-disk-space@v1
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -155,6 +159,19 @@ jobs:
           fi
 
           exit 0
+
+      - name: Delete old caches
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -s $OLD_CACHES_JSON ]; then
+            echo "Deleting $(jq 'length' $OLD_CACHES_JSON) old caches..."
+            jq -r '.[].id' $OLD_CACHES_JSON | while read -r cache_id; do
+              echo "Deleting old cache: $cache_id"
+              gh cache delete "$cache_id" --repo ${{ github.repository }} || true
+            done
+          else
+            echo "No old caches to delete"
+          fi
 
   ci:
     needs:

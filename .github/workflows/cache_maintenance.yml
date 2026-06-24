@@ -11,43 +11,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-name: Nightly Cache Refresh
+name: Cache maintenance
 
 on:
-  # schedule:
-  #   - cron: "0 2 * * *"
   workflow_dispatch:
   push:
     branches: [main]
 
 jobs:
-  check_recent_default_branch_activity:
-    name: Check default branch activity
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      should_run: ${{ steps.check.outputs.should_run }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-      - name: Check latest default branch commit age
-        id: check
-        run: |
-          # should_run is true if there was at least one commit in the last 24 hours, false otherwise
-          last_commits="$(git log --since="24 hours ago" --oneline)"
-          if [ -n "$last_commits" ]; then
-            echo "Recent activity detected on the default branch. Proceeding with cache refresh."
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No recent activity on the default branch. Skipping cache refresh to save resources."
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-          fi
-
   check_repository_cache_inputs:
     name: Check repository cache inputs
-    needs: check_recent_default_branch_activity
-    if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -94,32 +67,15 @@ jobs:
             echo "should_refresh_cache=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # Jobs are run sequentially to avoid race conditions on repository cache deletion and recreation.
-  # They will be running even if previous jobs failed, as long as the default branch had recent activity and the workflow was not manually cancelled.
-  delete_all_caches:
+  recreate_repository_cache:
+    # Delete all caches and create a new repository cache if Bazel repository cache inputs changed.
+    # Fetch dependencies for all variants and upload single repository cache.
+    # This job should be the only one which uploads a repository cache.
+    name: Recreate repository cache
     needs:
-      - check_recent_default_branch_activity
-      - check_repository_cache_inputs
-    if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' && needs.check_repository_cache_inputs.outputs.should_refresh_cache == 'true' }}
-    name: Delete all GitHub Actions caches
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - name: Delete all caches in this repository
-        run: gh cache delete --repo ${{ github.repository }} --all
-
-  create_repository_cache:
-    name: Create repository cache
-    needs:
-      - delete_all_caches
-      - check_recent_default_branch_activity
       - check_repository_cache_inputs
     runs-on: ubuntu-24.04
-    if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' && needs.check_repository_cache_inputs.outputs.should_refresh_cache == 'true' }}
+    if: ${{ !cancelled() && needs.check_repository_cache_inputs.outputs.should_refresh_cache == 'true' }}
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: false
@@ -127,7 +83,11 @@ jobs:
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
       contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Delete all caches in this repository
+        run: gh cache delete --repo ${{ github.repository }} --all || true
       - uses: eclipse-score/more-disk-space@v1
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -198,19 +158,17 @@ jobs:
 
   ci:
     needs:
-      - create_repository_cache
-      - check_recent_default_branch_activity
+      - recreate_repository_cache
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
       contents: read
     secrets: inherit
-    if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' }}
+    if: ${{ !cancelled() }}
     uses: ./.github/workflows/ci.yml
 
-  ci-pull-request-target:
+  ci_pull_request_target:
     needs:
-      - create_repository_cache
-      - check_recent_default_branch_activity
+      - recreate_repository_cache
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
       contents: write
@@ -219,5 +177,5 @@ jobs:
       id-token: write
       issues: write
     secrets: inherit
-    if: ${{ !cancelled() && needs.check_recent_default_branch_activity.outputs.should_run == 'true' }}
+    if: ${{ !cancelled() }}
     uses: ./.github/workflows/ci_pull_request_target.yml

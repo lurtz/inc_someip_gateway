@@ -99,10 +99,12 @@ jobs:
         run: |
           sudo mkdir -p /mnt/.bazel
           sudo chown -R $USER:$USER /mnt/.bazel
+
       - name: Setup Bazel
         uses: elektrobit-contrib/eclipse-score_cicd-actions/setup-bazel-cache@use-lurtz-setup-bazel
         with:
           unique-cache-name: ${{ github.job }}
+          skip-cache-restore: true
 
       - name: Setup QNX SDP usage
         uses: eclipse-score/cicd-actions/setup-qnx-sdp@a2b3c36fc7d1b9d03880d19935c7ac9cfffe58c6 # 2026-05-19

@@ -28,7 +28,7 @@ on:
 
 jobs:
   build-docs:
-    uses: elektrobit-contrib/eclipse-score_cicd-workflows/.github/workflows/docs.yml@improved-caching
+    uses: eclipse-score/cicd-workflows/.github/workflows/docs.yml@improved-caching
     permissions:
       contents: write
       pages: write

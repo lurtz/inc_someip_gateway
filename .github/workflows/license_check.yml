@@ -26,6 +26,6 @@ permissions:
 
 jobs:
   license-check:
-    uses: elektrobit-contrib/eclipse-score_cicd-workflows/.github/workflows/license-check.yml@improved-caching
+    uses: eclipse-score/cicd-workflows/.github/workflows/license-check.yml@improved-caching
     secrets:
       dash-api-token: ${{ secrets.ECLIPSE_GITLAB_API_TOKEN }}

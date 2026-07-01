@@ -22,6 +22,6 @@ permissions:
 
 jobs:
   formatting-check:
-    uses: elektrobit-contrib/eclipse-score_cicd-workflows/.github/workflows/format.yml@improved-caching
+    uses: eclipse-score/cicd-workflows/.github/workflows/format.yml@improved-caching
     with:
       bazel-target: "test //:format.check" # optional, this is the default

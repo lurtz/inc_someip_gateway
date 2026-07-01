@@ -29,6 +29,8 @@ jobs:
       actions: write # needed for cache deletion at setup-bazel-cache
       contents: read
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
       - name: Run repository cache maintenance action
         uses: ./.github/actions/repository-cache-maintenance
         env:

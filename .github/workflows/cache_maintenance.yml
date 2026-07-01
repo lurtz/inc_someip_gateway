@@ -20,29 +20,11 @@ on:
 
 jobs:
   repository_cache_maintenance:
-    # Check cache inputs and recreate repository cache only when required.
-    # Fetch dependencies for configured variants and upload a single repository cache.
-    # This job should be the only one which uploads a repository cache.
-    name: Repository cache maintenance
-    runs-on: ubuntu-24.04
     permissions:
       actions: write # needed for cache deletion at setup-bazel-cache
       contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-      - name: Run repository cache maintenance action
-        uses: ./.github/actions/repository-cache-maintenance
-        env:
-          SCORE_QNX_LICENSE: ${{ secrets.SCORE_QNX_LICENSE }}
-          SCORE_QNX_USER: ${{ secrets.SCORE_QNX_USER }}
-          SCORE_QNX_PASSWORD: ${{ secrets.SCORE_QNX_PASSWORD }}
-        with:
-          variants: |
-            x86_64-linux|//...
-            aarch64-linux|//...
-            x86_64-qnx|//src/... //tests/...
-            aarch64-qnx|//src/... //tests/...
+    secrets: inherit
+    uses: ./.github/workflows/repository_cache_maintenance.yml
 
   ci:
     needs:

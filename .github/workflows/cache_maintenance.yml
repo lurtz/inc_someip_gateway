@@ -24,7 +24,7 @@ jobs:
       actions: write # needed for cache deletion at setup-bazel-cache
       contents: read
     secrets: inherit
-    uses: ./.github/workflows/repository_cache_maintenance.yml
+    uses: eclipse-score/cicd-workflows/.github/workflows/cache_maintenance.yml@improved-caching
 
   ci:
     needs:

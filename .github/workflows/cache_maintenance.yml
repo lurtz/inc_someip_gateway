@@ -59,7 +59,7 @@ jobs:
             echo "  (none)"
           fi
 
-          if printf '%s\n' "$changed_files" | grep -Eq '^(MODULE\.bazel|\.bazelrc|\.bazelversion|.*\.bzl$)'; then
+          if printf '%s\n' "$changed_files" | grep -Eq '^MODULE\.bazel'; then
             echo "Bazel repository cache inputs changed. Proceeding with cache refresh."
             echo "should_refresh_cache=true" >> "$GITHUB_OUTPUT"
           else

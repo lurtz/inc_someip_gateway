@@ -36,7 +36,7 @@ jobs:
 
       - name: Check if Bazel repository cache inputs changed
         id: check
-        uses: ./.github/actions/repository-cache-check
+        uses: eclipse-score/cicd-actions/repository-cache-check@use-lurtz-setup-bazel
         with:
           old-caches-json: ${{ env.OLD_CACHES_JSON }}
 
@@ -69,7 +69,7 @@ jobs:
 
       - name: Refresh Bazel repository cache artifacts
         if: ${{ steps.check.outputs.should_refresh_cache == 'true' }}
-        uses: ./.github/actions/repository-cache-refresh
+        uses: eclipse-score/cicd-actions/repository-cache-refresh@use-lurtz-setup-bazel
         with:
           variants: |
             x86_64-linux|//...

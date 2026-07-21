@@ -37,6 +37,7 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/format.yml
   repository_cache_maintenance:
+    # TODO remove
     # This is only executed to test the workflow. Real action happens at `warm_main_branch_cache.yml` after the PR has been merged to main.
     if: ${{ github.event_name != 'push' }}
     secrets: inherit

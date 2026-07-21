@@ -13,36 +13,34 @@
 
 name: CI (context of the base branch)
 on:
-  # pull_request_target:
-  #   types: [opened, reopened, synchronize, labeled, unlabeled]
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize, labeled, unlabeled]
   workflow_dispatch:
   workflow_call:
 jobs:
-  # build_and_test_qnx:
-  #   # Do not run by default for every PR.
-  #   # Run either in merge queue or if the pull request has the 'test-qnx' label.
-  #   if: github.event_name != 'pull_request_target' || contains(github.event.pull_request.labels.*.name, 'test-qnx')
-  #   secrets: inherit
-  #   uses: ./.github/workflows/build_and_test_qnx.yml
-  #   permissions:
-  #     contents: read
-  #     pull-requests: read
-  # docs:
-  #   secrets: inherit
-  #   uses: ./.github/workflows/docs.yml
-  #   permissions:
-  #     contents: write
-  #     pages: write
-  #     pull-requests: write
-  #     id-token: write
-  # license_check:
-  #   secrets: inherit
-  #   uses: ./.github/workflows/license_check.yml
-  #   permissions:
-  #     pull-requests: write
-  #     issues: write
+  build_and_test_qnx:
+    # Do not run by default for every PR.
+    # Run either in merge queue or if the pull request has the 'test-qnx' label.
+    if: github.event_name != 'pull_request_target' || contains(github.event.pull_request.labels.*.name, 'test-qnx')
+    secrets: inherit
+    uses: ./.github/workflows/build_and_test_qnx.yml
+    permissions:
+      contents: read
+      pull-requests: read
+  docs:
+    secrets: inherit
+    uses: ./.github/workflows/docs.yml
+    permissions:
+      contents: write
+      pages: write
+      pull-requests: write
+      id-token: write
+  license_check:
+    secrets: inherit
+    uses: ./.github/workflows/license_check.yml
+    permissions:
+      pull-requests: write
+      issues: write
   repository_cache_maintenance:
     # This is only executed to test the workflow. Real action happens at `warm_main_branch_cache.yml` after the PR has been merged to main.
     if: ${{ github.event_name != 'push' }}
@@ -57,9 +55,9 @@ jobs:
     name: ci_pull_request_target/can_merge
     if: always()
     needs:
-      # - build_and_test_qnx
-      # - docs
-      # - license_check
+      - build_and_test_qnx
+      - docs
+      - license_check
       - repository_cache_maintenance
     permissions: {}
     runs-on: ubuntu-latest

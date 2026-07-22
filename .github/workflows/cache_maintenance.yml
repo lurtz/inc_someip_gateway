@@ -15,7 +15,7 @@ name: Cache maintenance
 
 # Refreshes caches and rebuilds a new bazel repository cache when MODULE.bazel.lock changes.
 # Caches are only saved on pushes to the main branch or on workflow_dispatch events.
-# In merge_groups and pull requests a fast dry-run is executed to ensure caches can be rebuilt successfully.
+# In merge_groups and pull requests a fast dry-run is executed to ensure inputs are valid and caches can be rebuilt successfully.
 
 on:
   pull_request:

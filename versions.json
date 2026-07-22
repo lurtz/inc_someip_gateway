@@ -2,5 +2,9 @@
   {
     "version": "main",
     "url": "https://lurtz.github.io/inc_someip_gateway/main/"
+  },
+  {
+    "version": "pr-10",
+    "url": "https://lurtz.github.io/inc_someip_gateway/pr-10/"
   }
 ]

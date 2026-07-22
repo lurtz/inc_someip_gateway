@@ -30,7 +30,6 @@ on:
 
 jobs:
   repository_cache_maintenance:
-    name: repository_cache_maintenance
     permissions:
       actions: write # needed for cache deletion after cache refresh
       contents: read

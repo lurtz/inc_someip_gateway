@@ -18,8 +18,8 @@ name: Cache maintenance
 # In merge_groups and pull requests a fast dry-run is executed to ensure caches can be rebuilt successfully.
 
 on:
-  pull_request:
-    # pull_request_target:
+  # pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize, labeled, unlabeled]
   merge_group:
     types: [checks_requested]

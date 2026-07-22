@@ -17,6 +17,8 @@ name: Cache maintenance
 # Caches are only saved on pushes to the main branch or on workflow_dispatch events.
 # In merge_groups and pull requests a fast dry-run is executed to ensure caches can be rebuilt successfully.
 
+# retrigger CI
+
 on:
   pull_request:
     types: [opened, reopened, synchronize, labeled, unlabeled]

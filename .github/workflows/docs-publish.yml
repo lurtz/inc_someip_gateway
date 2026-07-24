@@ -13,8 +13,6 @@
 
 name: Publish Documentation
 
-# delete me
-
 on:
   workflow_run:
     workflows: ["CI", "Cache maintenance"]

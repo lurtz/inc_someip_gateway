@@ -35,6 +35,9 @@ jobs:
   copyright:
     secrets: inherit
     uses: ./.github/workflows/copyright.yml
+  docs:
+    secrets: inherit
+    uses: ./.github/workflows/docs.yml
   format:
     secrets: inherit
     uses: ./.github/workflows/format.yml
@@ -51,6 +54,7 @@ jobs:
       - build_and_test_host
       - build_and_test_cross_compilation
       - copyright
+      - docs
       - format
     permissions: {}
     runs-on: ubuntu-latest

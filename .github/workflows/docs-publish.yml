@@ -15,7 +15,7 @@ name: Publish Documentation
 
 on:
   workflow_run:
-    workflows: ["CI", "Cache maintenance"]
+    workflows: ["CI"]
     types:
       - completed
 

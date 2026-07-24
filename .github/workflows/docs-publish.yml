@@ -19,7 +19,7 @@ on:
     types:
       - completed
 
-# Do not merge
+# Do not merge, for real
 
 jobs:
   docs-deploy:

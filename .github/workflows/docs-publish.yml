@@ -1,5 +1,5 @@
 # *******************************************************************************
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -11,18 +11,21 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-name: Documentation
+name: Publish Documentation
 
 on:
-  workflow_call:
+  workflow_run:
+    workflows: ["Documentation"]
+    types:
+      - completed
 
 jobs:
-  build-docs:
-    uses: eclipse-score/cicd-workflows/.github/workflows/docs.yml@secure-docs
+  docs-deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    uses: eclipse-score/cicd-workflows/.github/workflows/docs-publish.yml@secure-docs
     permissions:
-      contents: read
-
-    with:
-      # the bazel-target depends on your repo specific docs_targets configuration (e.g. "suffix")
-      bazel-target: "//:docs -- --github_user=${{ github.repository_owner }} --github_repo=${{ github.event.repository.name }}"
-      retention-days: 3
+      pages: write
+      id-token: write
+      contents: write
+      pull-requests: write
+      actions: write

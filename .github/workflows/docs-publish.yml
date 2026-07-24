@@ -15,13 +15,17 @@ name: Publish Documentation
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["CI", "Cache maintenance"]
     types:
       - completed
 
 jobs:
   docs-deploy:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event.workflow_run.conclusion == 'success' && !(
+        github.event.workflow_run.name == 'Cache maintenance' &&
+        github.event.workflow_run.event == 'pull_request'
+      )
     uses: eclipse-score/cicd-workflows/.github/workflows/docs-publish.yml@secure-docs
     permissions:
       pages: write
